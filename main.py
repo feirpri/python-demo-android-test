@@ -38,7 +38,8 @@ def toggle_use_app_checker():
 
     # 点击搜索结果中的验证应用并进入设置项
     sleep(5)
-    pos = find_string_in_img(phone.snapshot(), '验证应用')
+    pos = find_string_in_img(phone.snapshot('settings.png'), '验证应用')
+    return
     sleep(1)
     phone.touch(pos)
 

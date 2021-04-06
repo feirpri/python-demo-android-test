@@ -1,17 +1,20 @@
 from pytesseract import image_to_data
+import cv2
 
-minConf = 80  # 识别时最小有效置信度
+defaultMinConf = 80  # 识别时最小有效置信度
 lang = 'chi_sim'  # 识别时使用的文字语言
 
 
-def get_string_position(img):
-    img_data = image_to_data(img, lang=lang).split('\n')
+def get_string_position(img, min_conf=defaultMinConf, log=False):
+    # 提高文字识别正确率
+    local_img = oo = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)[1]
+    img_data = image_to_data(local_img, lang=lang).split('\n')
     data_cache = {}
     output = []
     img_data.pop(0)
     for line in img_data:
         row = line.split('\t')
-        if len(row) < 12 or int(row[10]) < minConf:
+        if len(row) < 12 or int(row[10]) < min_conf:
             continue
         key = row[2] + ':' + row[4]
         value = row[11]
@@ -29,18 +32,17 @@ def get_string_position(img):
             data_cache[key] = [value, (left, right), (top, bottom), (conf, conf)]
     for line in data_cache:
         output.append(data_cache[line])
+        if log:
+            print(data_cache[line])
     return output
 
 
-def get_special_string_position(data, string, log=False):
+def get_special_string_position(data, string):
     for row in data:
-        if log:
-            print(row)
         if row[0].find(string) > -1:
-            print((row[2][0] + row[2][1]) / 2)
             return (row[1][0] + row[1][1]) / 2, (row[2][0] + row[2][1]) / 2
     return None
 
 
-def find_string_in_img(img, string, log=False):
-    return get_special_string_position(get_string_position(img), string, log)
+def find_string_in_img(img, string, min_conf=defaultMinConf, log=False):
+    return get_special_string_position(get_string_position(img, min_conf, log), string)
